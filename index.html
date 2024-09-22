@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy List</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Happy List">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            max-width: 100%; 
+            margin: 0 auto; 
+            padding: 10px; 
+            box-sizing: border-box;
+            background-color: #F2F2F7;
+        }
+        h1, h2 { text-align: center; color: #1C1C1E; }
+        #taskForm, #taskList, #statistics, #calendar { 
+            margin-bottom: 20px; 
+            width: 100%;
+        }
+        #taskForm { 
+            display: flex;
+            flex-direction: column;
+            gap: 10px; 
+        }
+        #taskForm input, #taskForm select, #taskForm textarea, #taskForm button,
+        #categoryManager input, #categoryManager button {
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #D1D1D6;
+            background-color: #FFFFFF;
+        }
+        #taskForm button, #categoryManager button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+        #taskList { 
+            list-style-type: none; 
+            padding: 0; 
+        }
+        .task { 
+            background-color: #FFFFFF; 
+            margin-bottom: 10px; 
+            padding: 15px; 
+            border-radius: 10px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .task-details { 
+            margin-bottom: 10px;
+        }
+        .task-actions button { 
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #34C759;
+            color: white;
+            border: none;
+            border-radius: 10px;
+        }
+        .low { border-right: 5px solid #34C759; }
+        .medium { border-right: 5px solid #FF9500; }
+        .high { border-right: 5px solid #FF3B30; }
+        #statistics { 
+            display: flex; 
+            flex-direction: column;
+            gap: 10px;
+        }
+        .stat-card { 
+            background-color: #FFFFFF; 
+            padding: 15px; 
+            border-radius: 10px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        #calendar { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            gap: 2px; 
+        }
+        .calendar-day { 
+            background-color: #FFFFFF; 
+            padding: 5px; 
+            border-radius: 5px; 
+            min-height: 40px;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .calendar-day.has-task { background-color: #E5F7FF; }
+        #categoryManager { 
+            display: flex; 
+            flex-direction: column;
+            gap: 10px; 
+            margin-bottom: 10px; 
+        }
+        #filters {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        #filters input, #filters select {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid #D1D1D6;
+            background-color: #FFFFFF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Happy List</h1>
+    
+    <h2>הוספת משימה חדשה</h2>
+    <div id="categoryManager">
+        <input type="text" id="newCategory" placeholder="קטגוריה חדשה">
+        <button onclick="addCategory()">הוסף קטגוריה</button>
+    </div>
+    <form id="taskForm">
+        <input type="text" id="taskTitle" placeholder="כותרת המשימה" required>
+        <textarea id="taskNotes" placeholder="הערות"></textarea>
+        <select id="taskCategory" required>
+            <option value="">בחר קטגוריה</option>
+        </select>
+        <select id="taskCreator" required>
+            <option value="">מי יצר את המשימה?</option>
+            <option value="ליאור">ליאור</option>
+            <option value="זיו">זיו</option>
+        </select>
+        <select id="taskAssignee" required>
+            <option value="">למי המשימה מיועדת?</option>
+            <option value="ליאור">ליאור</option>
+            <option value="זיו">זיו</option>
+        </select>
+        <select id="taskUrgency" required>
+            <option value="low">אין לחץ</option>
+            <option value="medium">דחיפות בינונית</option>
+            <option value="high">נגמרו התירוצים</option>
+        </select>
+        <input type="date" id="taskDate" required>
+        <select id="taskRepeat">
+            <option value="none">ללא חזרה</option>
+            <option value="daily">יומי</option>
+            <option value="weekly">שבועי</option>
+            <option value="monthly">חודשי</option>
+        </select>
+        <button type="submit">הוסף משימה</button>
+    </form>
+
+    <h2>משימות פתוחות</h2>
+    <div id="filters">
+        <input type="text" id="taskSearch" placeholder="חיפוש משימות">
+        <select id="filterCategory">
+            <option value="">כל הקטגוריות</option>
+        </select>
+        <select id="filterUrgency">
+            <option value="">כל רמות הדחיפות</option>
+            <option value="low">אין לחץ</option>
+            <option value="medium">דחיפות בינונית</option>
+            <option value="high">נגמרו התירוצים</option>
+        </select>
+    </div>
+    <ul id="taskList"></ul>
+
+    <h2>סטטיסטיקות</h2>
+    <div id="statistics"></div>
+
+    <h2>לוח שנה</h2>
+    <div id="calendar"></div>
+
+    <script>
+        let tasks = [];
+        let categories = ['איסוף חבילה', 'סופר', 'להוריד מהראש'];
+        const users = ['ליאור', 'זיו'];
+        const taskForm = document.getElementById('taskForm');
+        const taskList = document.getElementById('taskList');
+        const statistics = document.getElementById('statistics');
+        const calendar = document.getElementById('calendar');
+
+        // טעינת משימות מ-localStorage
+        if (localStorage.getItem('tasks')) {
+            tasks = JSON.parse(localStorage.getItem('tasks'));
+        }
+
+        // טעינת קטגוריות מ-localStorage
+        if (localStorage.getItem('categories')) {
+            categories = JSON.parse(localStorage.getItem('categories'));
+        }
+
+        function addCategory() {
+            const newCategoryInput = document.getElementById('newCategory');
+            const newCategory = newCategoryInput.value.trim();
+            if (newCategory && !categories.includes(newCategory)) {
+                categories.push(newCategory);
+                updateCategoryDropdown();
+                newCategoryInput.value = '';
+                localStorage.setItem('categories', JSON.stringify(categories));
+                alert('קטגוריה חדשה נוספה בהצלחה!');
+            } else if (categories.includes(newCategory)) {
+                alert('קטגוריה זו כבר קיימת.');
+            } else {
+                alert('אנא הכנס שם קטגוריה תקין.');
+            }
+        }
+
+        function updateCategoryDropdown() {
+            const categoryDropdown = document.getElementById('taskCategory');
+            const filterCategoryDropdown = document.getElementById('filterCategory');
+            categoryDropdown.innerHTML = '<option value="">בחר קטגוריה</option>';
+            filterCategoryDropdown.innerHTML = '<option value="">כל הקטגוריות</option>';
+            categories.forEach(category => {
+                categoryDropdown.innerHTML += `<option value="${category}">${category}</option>`;
+                filterCategoryDropdown.innerHTML += `<option value="${category}">${category}</option>`;
+            });
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('taskTitle').value,
+                notes: document.getElementById('taskNotes').value,
+                category: document.getElementById('taskCategory').value,
+                creator: document.getElementById('taskCreator').value,
+                assignee: document.getElementById('taskAssignee').value,
+                urgency: document.getElementById('taskUrgency').value,
+                date: document.getElementById('taskDate').value,
+                repeat: document.getElementById('taskRepeat').value,
+                completed: false
+            };
+
+            if (!newTask.title || !newTask.category || !newTask.creator || !newTask.assignee || !newTask.date) {
+                alert('אנא מלא את כל השדות הנדרשים.');
+                return;
+            }
+
+            tasks.push(newTask);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            renderTasks();
+            renderStatistics();
+            renderCalendar();
+            taskForm.reset();
+            alert('משימה נוספה בהצלחה!');
+        }
+
+        taskForm.addEventListener('submit', addTask);
+
+        function renderTasks() {
+            const searchTerm = document.getElementById('taskSearch').value.toLowerCase();
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterUrgency = document.getElementById('filterUrgency').value;
+
+            taskList.innerHTML = '';
+            const filteredTasks = tasks.filter(task => !task.completed &&
+                         task.title.toLowerCase().includes(searchTerm) &&
+                         (filterCategory === '' || task.category === filterCategory) &&
+                         (filterUrgency === '' || task.urgency === filterUrgency)
+            );
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = '<li>אין משימות תואמות לחיפוש.</li>';
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task ${task.urgency}`;
+                li.innerHTML = `
+                    <div class="task-details">
+                        <strong>${task.title}</strong><br>
+                        הערות: ${task.notes}<br>
+                        קטגוריה: ${task.category}<br>
+                        יוצר: ${task.creator}<br>
+                        אחראי: ${task.assignee}<br>
+                        דחיפות: ${getUrgencyText(task.urgency)}<br>
+                        תאריך יעד: ${task.date}<br>
+                        חזרה: ${getRepeatText(task.repeat)}
+                    </div>
+                    <div class="task-actions">
+                        <button onclick="completeTask(${task.id})">סיים משימה</button>
+                    </div>
+                `;
+                taskList.appendChild(li);
+            });
+        }
+
+        function getUrgencyText(urgency) {
+            switch(urgency) {
+                case 'low': return 'אין לחץ';
+                case 'medium': return 'דחיפות בינונית';
+                case 'high': return 'נגמרו התירוצים';
+                default: return 'לא צוין';
+            }
+        }
+
+        function getRepeatText(repeat) {
+            switch(repeat) {
+                case 'daily': return 'יומי';
+                case 'weekly': return 'שבועי';
+                case 'monthly': return 'חודשי';
+                default: return 'ללא חזרה';
+            }
+        }
+
+        function completeTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = true;
+                if (task.repeat !== 'none') {
+                    const newTask = {...task, id: Date.now(), completed: false};
+                    switch(task.repeat) {
+                        case 'daily':
+                            newTask.date = new Date(new Date(task.date).getTime() + 24*60*60*1000).toISOString().split('T')[0];
+                            break;
+                        case 'weekly':
+                            newTask.date = new Date(new Date(task.date).getTime() + 7*24*60*60*1000).toISOString().split('T')[0];
+                            break;
+                        case 'monthly':
+                            const date = new Date(task.date);
+                            date.setMonth(date.getMonth() + 1);
+                            newTask.date = date.toISOString().split('T')[0];
+                            break;
+                    }
+                    tasks.push(newTask);
+                }
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                renderTasks();
+                renderStatistics();
+                renderCalendar();
+                alert('משימה הושלמה בהצלחה!');
+            }
+        }
+
+        function renderStatistics() {
+            statistics.innerHTML = '';
+            users.forEach(user => {
+                const userTasks = tasks.filter(t => t.assignee === user);
+                const completedTasks = userTasks.filter(t => t.completed);
+                const completionRate = userTasks.length > 0 ? (completedTasks.length / userTasks.length * 100).toFixed(2) : 0;
+                const statCard = document.createElement('div');
+                statCard.className = 'stat-card';
+                statCard.innerHTML = `
+                    <h3>${user}</h3>
+                    משימות פתוחות: ${userTasks.length - completedTasks.length}<br>
+                    משימות שהושלמו: ${completedTasks.length}<br>
+                    אחוז עמידה ביעד: ${completionRate}%
+                `;
+                statistics.appendChild(statCard);
+            });
