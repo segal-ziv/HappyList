@@ -118,7 +118,7 @@
     </style>
 </head>
 <body>
-    <h1>Happy List</h1>
+   <img src="icon-192x192.png" alt="Happy List Logo" style="max-width: 200px; margin: 20px auto; display: block;">
     
     <h2>הוספת משימה חדשה</h2>
     <div id="categoryManager">
@@ -199,7 +199,8 @@
         function addCategory() {
             const newCategoryInput = document.getElementById('newCategory');
             const newCategory = newCategoryInput.value.trim();
-            if (newCategory && !categories.includes(newCategory)) {
+            if (newCategory && !categories.includes(newCategory))localStorage.setItem('categories', JSON.stringify(categories));
+updateCategoryDropdown(); {
                 categories.push(newCategory);
                 updateCategoryDropdown();
                 newCategoryInput.value = '';
