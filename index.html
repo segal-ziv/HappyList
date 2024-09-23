@@ -179,7 +179,7 @@
 
     <script>
         let tasks = [];
-        let categories = ['איסוף חבילה', 'סופר', 'להוריד מהראש'];
+        let categories = ['איסוף חבילה', 'פינוי פסולת ימי חמישי', 'רשימת קניות', 'הבנים שלנו'];
         const users = ['ליאור', 'זיו'];
         const taskForm = document.getElementById('taskForm');
         const taskList = document.getElementById('taskList');
@@ -194,13 +194,15 @@
         // טעינת קטגוריות מ-localStorage
         if (localStorage.getItem('categories')) {
             categories = JSON.parse(localStorage.getItem('categories'));
+        } else {
+            // אם אין קטגוריות ב-localStorage, נשתמש בקטגוריות ברירת המחדל
+            localStorage.setItem('categories', JSON.stringify(categories));
         }
 
         function addCategory() {
             const newCategoryInput = document.getElementById('newCategory');
             const newCategory = newCategoryInput.value.trim();
-            if (newCategory && !categories.includes(newCategory))localStorage.setItem('categories', JSON.stringify(categories));
-updateCategoryDropdown(); {
+            if (newCategory && !categories.includes(newCategory)) {
                 categories.push(newCategory);
                 updateCategoryDropdown();
                 newCategoryInput.value = '';
@@ -252,8 +254,6 @@ updateCategoryDropdown(); {
             taskForm.reset();
             alert('משימה נוספה בהצלחה!');
         }
-
-        taskForm.addEventListener('submit', addTask);
 
         function renderTasks() {
             const searchTerm = document.getElementById('taskSearch').value.toLowerCase();
@@ -325,35 +325,3 @@ updateCategoryDropdown(); {
                         case 'weekly':
                             newTask.date = new Date(new Date(task.date).getTime() + 7*24*60*60*1000).toISOString().split('T')[0];
                             break;
-                        case 'monthly':
-                            const date = new Date(task.date);
-                            date.setMonth(date.getMonth() + 1);
-                            newTask.date = date.toISOString().split('T')[0];
-                            break;
-                    }
-                    tasks.push(newTask);
-                }
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                renderTasks();
-                renderStatistics();
-                renderCalendar();
-                alert('משימה הושלמה בהצלחה!');
-            }
-        }
-
-        function renderStatistics() {
-            statistics.innerHTML = '';
-            users.forEach(user => {
-                const userTasks = tasks.filter(t => t.assignee === user);
-                const completedTasks = userTasks.filter(t => t.completed);
-                const completionRate = userTasks.length > 0 ? (completedTasks.length / userTasks.length * 100).toFixed(2) : 0;
-                const statCard = document.createElement('div');
-                statCard.className = 'stat-card';
-                statCard.innerHTML = `
-                    <h3>${user}</h3>
-                    משימות פתוחות: ${userTasks.length - completedTasks.length}<br>
-                    משימות שהושלמו: ${completedTasks.length}<br>
-                    אחוז עמידה ביעד: ${completionRate}%
-                `;
-                statistics.appendChild(statCard);
-            });
